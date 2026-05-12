@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏合集 | 主页</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+        header {
+            margin-bottom: 50px;
+        }
+        h1 {
+            font-size: 2.8rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            font-size: 1.2rem;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+        .menu-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            align-items: center;
+        }
+        .menu-item {
+            background: white;
+            border-radius: 16px;
+            padding: 25px 30px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            text-align: left;
+        }
+        .menu-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.12);
+            border-color: #3498db;
+        }
+        .menu-item a {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        .menu-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .menu-title::before {
+            content: '';
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #3498db;
+        }
+        .menu-item:nth-child(2) .menu-title::before {
+            background-color: #2ecc71;
+        }
+        .menu-item:nth-child(3) .menu-title::before {
+            background-color: #9b59b6;
+        }
+        .menu-desc {
+            font-size: 1rem;
+            color: #5d6d7e;
+            line-height: 1.5;
+        }
+        .menu-filename {
+            font-family: 'Consolas', 'Monaco', monospace;
+            background-color: #f8f9fa;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: #e74c3c;
+            margin-top: 10px;
+            display: inline-block;
+        }
+        footer {
+            margin-top: 60px;
+            color: #95a5a6;
+            font-size: 0.9rem;
+        }
+        @media (max-width: 600px) {
+            h1 { font-size: 2.2rem; }
+            .menu-item { padding: 20px; }
+            .menu-title { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>游戏合集</h1>
+            <p class="subtitle">简洁、专注的游戏导航页面</p>
+        </header>
+
+        <main>
+            <ul class="menu-list">
+                <li class="menu-item">
+                    <a href="PokerScorer.html">
+                        <div class="menu-title">一、扑克牌记分</div>
+                        <p class="menu-desc">用于记录和计算扑克牌游戏对局得分的工具。</p>
+                        <div class="menu-filename">PokerScorer.html</div>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="24Calculator.html">
+                        <div class="menu-title">二、算24点游戏</div>
+                        <p class="menu-desc">使用给定的四个数字，通过加减乘除运算得到24的经典数学游戏。</p>
+                        <div class="menu-filename">24Calculator.html</div>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="GuanDan.html">
+                        <div class="menu-title">三、掼蛋游戏</div>
+                        <p class="menu-desc">流行于华东地区的四人扑克牌游戏，规则复杂，讲究配合。</p>
+                        <div class="menu-filename">GuanDan.html</div>
+                    </a>
+                </li>
+            </ul>
+        </main>
+
+        <footer>
+            <p>将本文件与三个游戏HTML文件置于同一目录下即可使用。</p>
+        </footer>
+    </div>
+</body>
+</html>
