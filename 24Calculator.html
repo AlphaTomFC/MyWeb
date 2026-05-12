@@ -1,0 +1,1774 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>24点游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 15px;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .game-header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+
+        .game-controls {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .game-controls select,
+        .game-controls button {
+            padding: 6px 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .game-controls select {
+            background: #f0f0f0;
+        }
+
+        .game-controls button {
+            background: #667eea;
+            color: white;
+        }
+
+        .game-controls button:hover {
+            background: #5a6fd8;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .timer, .score {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .number-cards {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .card:hover {
+            transform: scale(1.05);
+        }
+
+        .card.selected {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            transform: scale(1.1);
+        }
+
+        .game-steps {
+            margin-bottom: 15px;
+        }
+
+        .step-indicator {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .keypad {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .keypad-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .keypad button {
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .operator-btn {
+            background: #ff9f43;
+            color: white;
+            font-size: 2rem;
+        }
+
+        .operator-btn:hover {
+            background: #e88a2d;
+        }
+
+        .function-btn {
+            background: #ee5a6f;
+            color: white;
+            font-size: 16px;
+        }
+
+        .function-btn:hover {
+            background: #d64d5f;
+        }
+
+        .calculator-section {
+            border-top: 2px solid #e0e0e0;
+            padding-top: 15px;
+        }
+
+        .calculator-section h2 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 1.2rem;
+        }
+
+        .calculator-input {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .calculator-input input {
+            padding: 8px;
+            font-size: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            text-align: center;
+            outline: none;
+        }
+
+        .calculator-input input:focus {
+            border-color: #667eea;
+        }
+
+        #btn-solve {
+            width: 100%;
+            padding: 12px;
+            font-size: 14px;
+            background: #2ed573;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        #btn-solve:hover {
+            background: #27ae60;
+        }
+
+        #solution-result {
+            min-height: 60px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.2rem;
+        }
+
+        .modal-content p {
+            margin-bottom: 8px;
+            line-height: 1.4;
+            font-size: 14px;
+        }
+
+        #result-modal .modal-content {
+            text-align: center;
+        }
+
+        #result-close {
+            margin-top: 15px;
+            padding: 8px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        #history-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        #clear-history {
+            padding: 8px 15px;
+            background: #ee5a6f;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .help-content {
+            max-width: 400px;
+        }
+
+        .help-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .help-header h2 {
+            margin: 0;
+        }
+
+        .help-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 6px 10px;
+            border: 1px solid #e0e0e0;
+            background: #f8f9fa;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .tab-btn.active {
+            background: #4facfe;
+            color: white;
+            border-color: #4facfe;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            gap: 10px;
+        }
+
+        .step-number {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #4facfe;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            flex-shrink: 0;
+            font-size: 12px;
+        }
+
+        .step-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #fa709a;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .step h3 {
+            margin: 0 0 3px 0;
+            color: #333;
+            font-size: 13px;
+        }
+
+        .step p {
+            margin: 0;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .settings-item {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .settings-item label {
+            width: 110px;
+            font-weight: bold;
+            color: #333;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .settings-item select {
+            flex: 1;
+            padding: 6px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+
+
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 0.3s ease;
+        }
+
+        @media (max-width: 360px) {
+            .card {
+                height: 60px;
+                font-size: 1.2rem;
+            }
+
+            .operator-btn {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <header class="game-header">
+            <h1>24点游戏</h1>
+            <div class="game-controls">
+                <button id="settings-btn">设定</button>
+                <button id="help-btn">帮助</button>
+                <button id="history-btn">记录</button>
+            </div>
+        </header>
+
+        <main class="game-main">
+            <section class="game-info">
+                <div class="timer">
+                    <span>时间:</span>
+                    <span id="timer-display">00:00</span>
+                </div>
+                <div class="score">
+                    <span>得分:</span>
+                    <span id="score-display">0</span>
+                </div>
+            </section>
+
+            <section class="number-cards">
+                <div class="card" id="card-0" data-index="0">0</div>
+                <div class="card" id="card-1" data-index="1">0</div>
+                <div class="card" id="card-2" data-index="2">0</div>
+                <div class="card" id="card-3" data-index="3">0</div>
+            </section>
+
+            <section class="game-steps">
+                <div class="step-indicator">
+                    <span id="step-text">选择第一个数字</span>
+                </div>
+            </section>
+
+            <section class="keypad">
+                <div class="keypad-row">
+                    <button class="operator-btn" data-op="+">+</button>
+                    <button class="operator-btn" data-op="-">-</button>
+                    <button class="operator-btn" data-op="×">×</button>
+                    <button class="operator-btn" data-op="÷">÷</button>
+                </div>
+                <div class="keypad-row">
+                    <button class="function-btn" id="btn-redo">重做</button>
+                    <button class="function-btn" id="btn-restart">重开</button>
+                </div>
+            </section>
+        </main>
+
+        <section class="calculator-section">
+            <h2>24点计算器</h2>
+            <div class="calculator-input">
+                <input type="number" id="calc-num1" min="1" max="10">
+                <input type="number" id="calc-num2" min="1" max="10">
+                <input type="number" id="calc-num3" min="1" max="10">
+                <input type="number" id="calc-num4" min="1" max="10">
+            </div>
+            <button id="btn-solve">解题</button>
+            <div id="solution-result"></div>
+        </section>
+    </div>
+
+    <div id="help-modal" class="modal">
+        <div class="modal-content help-content">
+            <div class="help-header">
+                <h2>游戏帮助</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="help-tabs">
+                <button class="tab-btn active" data-tab="rules">规则</button>
+                <button class="tab-btn" data-tab="play">玩法</button>
+                <button class="tab-btn" data-tab="score">计分</button>
+            </div>
+            <div class="tab-content active" id="rules">
+                <p>1. 游戏随机生成4个1-10数字</p>
+                <p>2. 用加、减、乘、除计算出24</p>
+                <p>3. 每个数字只能用一次</p>
+            </div>
+            <div class="tab-content" id="play">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>选数字</h3>
+                    <p>点击第一张卡牌选数字</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>选运算</h3>
+                    <p>点运算符按钮</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>再选数字</h3>
+                    <p>点第二张卡牌，自动算结果</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h3>重复直到24</h3>
+                    <p>直到结果等于24</p>
+                </div>
+            </div>
+            <div class="tab-content" id="score">
+                <p>计分规则：</p>
+                <p> - 10秒内：10分</p>
+                <p> - 30秒内：8分</p>
+                <p> - 60秒内：5分</p>
+                <p> - 60秒外：3分</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="history-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>历史记录</h2>
+            <div id="history-list"></div>
+            <button id="clear-history">清空</button>
+        </div>
+    </div>
+
+    <div id="result-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="result-title"></h2>
+            <p id="result-message"></p>
+            <button id="result-close">确定</button>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal">
+        <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+            <span class="close">&times;</span>
+            <h2 style="text-align: center;">游戏设定</h2>
+            
+            <div class="settings-item">
+                <label>数字范围：</label>
+                <select id="number-range">
+                    <option value="1-10">1-10</option>
+                    <option value="1-13">1-13</option>
+                </select>
+            </div>
+
+            <div class="settings-item">
+                <label>难度等级：</label>
+                <select id="difficulty-level">
+                    <option value="easy">简单</option>
+                    <option value="medium">中等</option>
+                    <option value="hard">困难</option>
+                </select>
+            </div>
+
+            <div class="settings-item">
+                <label>使用数据库概率：</label>
+                <input type="range" id="db-probability" min="0" max="100" value="50">
+                <span id="db-probability-value">50%</span>
+            </div>
+
+            <div class="settings-item" style="flex-direction: column; align-items: flex-start;">
+                <label>选择要编辑的题库：</label>
+                <div style="display: flex; gap: 15px; margin-top: 8px;">
+                    <label style="display: flex; align-items: center; gap: 4px;">
+                        <input type="radio" name="db-level" value="easy" checked> 简单
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 4px;">
+                        <input type="radio" name="db-level" value="medium"> 中等
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 4px;">
+                        <input type="radio" name="db-level" value="hard"> 困难
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-item" style="flex-direction: column; align-items: flex-start;">
+                <label id="db-label">简单难度题库：</label>
+                <textarea id="custom-database-easy" rows="6" placeholder="1,2,3,4&#10;5,5,5,5&#10;2,3,4,6" style="width: 100%; padding: 8px; border: 1px solid #e0e0e0; border-radius: 5px; font-size: 13px;"></textarea>
+                <textarea id="custom-database-medium" rows="6" placeholder="3,3,8,8&#10;1,3,4,6&#10;2,4,5,6" style="width: 100%; padding: 8px; border: 1px solid #e0e0e0; border-radius: 5px; font-size: 13px; display: none;"></textarea>
+                <textarea id="custom-database-hard" rows="6" placeholder="3,3,7,7&#10;4,4,10,10&#10;5,5,7,11" style="width: 100%; padding: 8px; border: 1px solid #e0e0e0; border-radius: 5px; font-size: 13px; display: none;"></textarea>
+            </div>
+
+            <div class="settings-item" style="flex-direction: column; align-items: flex-start;">
+                <label>当前难度题库状态：</label>
+                <div id="custom-db-status" style="background: #f8f9fa; padding: 8px; border-radius: 5px; font-size: 12px; width: 100%;"></div>
+            </div>
+
+            <div class="settings-item" style="gap: 5px; display: flex; align-items: center; justify-content: center;">
+                <button id="btn-export-db" style="padding: 6px 12px; background: #2ed573; color: white; border: none; border-radius: 5px; font-size: 12px; cursor: pointer; display: inline-block; vertical-align: middle;">备份题库</button>
+                <div style="position: relative; display: inline-block;">
+                    <button id="btn-import-db" style="padding: 6px 12px; background: #4facfe; color: white; border: none; border-radius: 5px; font-size: 12px; cursor: pointer; display: inline-block; vertical-align: middle;">恢复题库</button>
+                    <input type="file" id="import-file" accept=".txt" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
+                </div>
+                <button id="btn-import-db-text" style="padding: 6px 12px; background: #9b59b6; color: white; border: none; border-radius: 5px; font-size: 12px; cursor: pointer; display: inline-block; vertical-align: middle;">粘贴恢复</button>
+                <button id="settings-save" style="padding: 6px 12px; background: #ee5a6f; color: white; border: none; border-radius: 5px; font-size: 12px; cursor: pointer; display: inline-block; vertical-align: middle;">设定保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class Game24 {
+            constructor() {
+                this.currentNumbers = [];
+                this.cardValues = [];
+                this.selectedCards = [];
+                this.operator = '';
+                this.history = [];
+                this.score = 0;
+                this.timer = 0;
+                this.timerInterval = null;
+                
+                this.difficultyDB = {
+                    easy: [
+                        [1, 1, 3, 8], [1, 1, 4, 6], [1, 1, 5, 5], [1, 2, 2, 6],
+                        [1, 2, 3, 4], [1, 2, 4, 4], [1, 3, 4, 4], [2, 2, 2, 3],
+                        [2, 2, 3, 3], [2, 2, 4, 4], [2, 3, 3, 4], [3, 3, 3, 3]
+                    ],
+                    medium: [
+                        [1, 3, 4, 6], [1, 4, 5, 6], [1, 5, 5, 5], [2, 3, 5, 6],
+                        [2, 4, 5, 6], [3, 3, 8, 8], [3, 4, 5, 5], [4, 4, 7, 7],
+                        [1, 2, 5, 8], [1, 3, 6, 8], [2, 3, 6, 9], [3, 4, 7, 8]
+                    ],
+                    hard: [
+                        [3, 3, 7, 7], [4, 4, 10, 10], [5, 5, 7, 11], [6, 6, 6, 10],
+                        [1, 7, 13, 13], [2, 7, 7, 10], [3, 8, 8, 10], [4, 8, 8, 11],
+                        [5, 5, 5, 11], [6, 6, 8, 11], [7, 7, 9, 10], [8, 8, 8, 12]
+                    ]
+                };
+                
+                try {
+                    const savedSettings = localStorage.getItem('game24Settings');
+                    this.settings = savedSettings ? JSON.parse(savedSettings) : this.getDefaultSettings();
+                    this.validateSettings();
+                } catch {
+                    this.settings = this.getDefaultSettings();
+                }
+                this.init();
+            }
+
+            getDefaultSettings() {
+                return {
+                    numberRange: '1-10',
+                    difficultyLevel: 'medium',
+                    dbProbability: 50,
+                    customDatabaseEasy: '',
+                    customDatabaseMedium: '',
+                    customDatabaseHard: ''
+                };
+            }
+
+            validateSettings() {
+                if (!this.settings || typeof this.settings !== 'object') {
+                    this.settings = this.getDefaultSettings();
+                    return;
+                }
+                if (!this.settings.numberRange) this.settings.numberRange = '1-10';
+                if (!this.settings.difficultyLevel) this.settings.difficultyLevel = 'medium';
+                if (typeof this.settings.dbProbability !== 'number') this.settings.dbProbability = 50;
+                if (!this.settings.customDatabaseEasy) this.settings.customDatabaseEasy = '';
+                if (!this.settings.customDatabaseMedium) this.settings.customDatabaseMedium = '';
+                if (!this.settings.customDatabaseHard) this.settings.customDatabaseHard = '';
+                if (!this.settings.customDatabase) this.settings.customDatabase = '';
+            }
+
+            init() {
+                this.bindEvents();
+                this.startNewGame();
+            }
+
+            bindEvents() {
+                const self = this;
+
+                document.querySelectorAll('.card').forEach(card => {
+                    card.addEventListener('click', function(e) {
+                        self.selectCard(e.target);
+                    });
+                    card.addEventListener('touchstart', function(e) {
+                        e.preventDefault();
+                        self.selectCard(this);
+                    }, { passive: false });
+                });
+
+                document.querySelectorAll('.operator-btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        self.selectOperator(e.target.dataset.op);
+                    });
+                    btn.addEventListener('touchstart', function(e) {
+                        e.preventDefault();
+                        self.selectOperator(this.dataset.op);
+                    }, { passive: false });
+                });
+
+                document.getElementById('btn-redo').addEventListener('click', function() { self.redo(); });
+                document.getElementById('btn-redo').addEventListener('touchstart', function(e) { e.preventDefault(); self.redo(); }, { passive: false });
+                
+                document.getElementById('btn-restart').addEventListener('click', function() { self.startNewGame(); });
+                document.getElementById('btn-restart').addEventListener('touchstart', function(e) { e.preventDefault(); self.startNewGame(); }, { passive: false });
+
+
+
+                document.getElementById('help-btn').addEventListener('click', function() { self.showModal('help-modal'); });
+                document.getElementById('help-btn').addEventListener('touchstart', function(e) { e.preventDefault(); self.showModal('help-modal'); }, { passive: false });
+                
+                document.getElementById('history-btn').addEventListener('click', function() {
+                    self.showModal('history-modal');
+                    self.updateHistoryDisplay();
+                });
+                document.getElementById('history-btn').addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    self.showModal('history-modal');
+                    self.updateHistoryDisplay();
+                }, { passive: false });
+
+                document.querySelectorAll('.close').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        const modal = e.target.closest('.modal');
+                        self.hideModal(modal.id);
+                    });
+                    btn.addEventListener('touchstart', function(e) {
+                        e.preventDefault();
+                        const modal = this.closest('.modal');
+                        self.hideModal(modal.id);
+                    }, { passive: false });
+                });
+
+                document.getElementById('result-close').addEventListener('click', function() {
+                    self.hideModal('result-modal');
+                    self.startNewGame();
+                });
+                document.getElementById('result-close').addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    self.hideModal('result-modal');
+                    self.startNewGame();
+                }, { passive: false });
+
+                document.getElementById('clear-history').addEventListener('click', function() { self.clearHistory(); });
+                document.getElementById('clear-history').addEventListener('touchstart', function(e) { e.preventDefault(); self.clearHistory(); }, { passive: false });
+
+                document.getElementById('btn-solve').addEventListener('click', function() { self.solve24(); });
+                document.getElementById('btn-solve').addEventListener('touchstart', function(e) { e.preventDefault(); self.solve24(); }, { passive: false });
+
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        self.switchTab(e.target.dataset.tab);
+                    });
+                    btn.addEventListener('touchstart', function(e) {
+                        e.preventDefault();
+                        self.switchTab(this.dataset.tab);
+                    }, { passive: false });
+                });
+
+                document.getElementById('settings-btn').addEventListener('click', function() {
+                    self.showModal('settings-modal');
+                    self.loadSettings();
+                });
+                document.getElementById('settings-btn').addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    self.showModal('settings-modal');
+                    self.loadSettings();
+                }, { passive: false });
+
+                document.getElementById('settings-save').addEventListener('click', function() { self.saveSettings(); });
+                document.getElementById('settings-save').addEventListener('touchstart', function(e) { e.preventDefault(); self.saveSettings(); }, { passive: false });
+
+                var dbProbability = document.getElementById('db-probability');
+                var dbProbabilityValue = document.getElementById('db-probability-value');
+                if (dbProbability) {
+                    dbProbability.addEventListener('input', function() {
+                        if (dbProbabilityValue) {
+                            dbProbabilityValue.textContent = this.value + '%';
+                        }
+                    });
+                }
+
+                document.getElementById('btn-export-db').addEventListener('click', function() { self.exportDatabase(); });
+                document.getElementById('btn-export-db').addEventListener('touchstart', function(e) { e.preventDefault(); self.exportDatabase(); }, { passive: false });
+
+                document.getElementById('btn-import-db-text').addEventListener('click', function() { self.importDatabaseFromText(); });
+                document.getElementById('btn-import-db-text').addEventListener('touchstart', function(e) { e.preventDefault(); self.importDatabaseFromText(); }, { passive: false });
+
+                document.getElementById('import-file').addEventListener('change', function(e) {
+                    var fileInput = this;
+                    var file = fileInput.files[0];
+                    if (file) {
+                        self.importDatabase(file);
+                    }
+                    fileInput.value = '';
+                });
+
+                document.querySelectorAll('input[name="db-level"]').forEach(function(radio) {
+                    radio.addEventListener('change', function() {
+                        var level = this.value;
+                        var easyTextarea = document.getElementById('custom-database-easy');
+                        var mediumTextarea = document.getElementById('custom-database-medium');
+                        var hardTextarea = document.getElementById('custom-database-hard');
+                        var dbLabel = document.getElementById('db-label');
+                        
+                        easyTextarea.style.display = 'none';
+                        mediumTextarea.style.display = 'none';
+                        hardTextarea.style.display = 'none';
+                        
+                        if (level === 'easy') {
+                            easyTextarea.style.display = 'block';
+                            dbLabel.textContent = '简单难度题库：';
+                        } else if (level === 'medium') {
+                            mediumTextarea.style.display = 'block';
+                            dbLabel.textContent = '中等难度题库：';
+                        } else if (level === 'hard') {
+                            hardTextarea.style.display = 'block';
+                            dbLabel.textContent = '困难难度题库：';
+                        }
+                        
+                        self.loadSettings();
+                    });
+                });
+            }
+
+            startNewGame() {
+                this.generateNumbers();
+                this.resetGameState();
+                this.resetTimer();
+                this.startTimer();
+            }
+
+            generateNumbers() {
+                this.currentNumbers = [];
+                this.cardValues = [0, 0, 0, 0];
+                
+                // 检查自定义题库
+                var customDB = this.parseCustomDatabase();
+                
+                // 如果设置100%使用数据库且有自定义题库，优先使用自定义题库
+                var useDB = this.settings.dbProbability === 100 || (Math.random() * 100 < this.settings.dbProbability);
+                
+                if (useDB) {
+                    var numbers = this.getNumbersFromDB();
+                    if (numbers && numbers.length === 4) {
+                        for (var i = 0; i < 4; i++) {
+                            this.currentNumbers[i] = numbers[i];
+                            this.cardValues[i] = numbers[i];
+                        }
+                        this.updateCardDisplay();
+                        this.updateCalculatorNumbers();
+                        var cardValuesCopy = [];
+                        for (var j = 0; j < this.cardValues.length; j++) {
+                            cardValuesCopy[j] = this.cardValues[j];
+                        }
+                        this.history = [{ cardValues: cardValuesCopy }];
+                        return;
+                    }
+                }
+                
+                var maxNum = this.settings.numberRange === '1-13' ? 13 : 10;
+                for (var k = 0; k < 4; k++) {
+                    var num;
+                    do {
+                        num = Math.floor(Math.random() * maxNum) + 1;
+                    } while (this.currentNumbers.indexOf(num) !== -1 && this.currentNumbers.length < 4);
+                    this.currentNumbers.push(num);
+                    this.cardValues[k] = num;
+                }
+                
+                var cardValuesCopy2 = [];
+                for (var m = 0; m < this.cardValues.length; m++) {
+                    cardValuesCopy2[m] = this.cardValues[m];
+                }
+                this.history = [{ cardValues: cardValuesCopy2 }];
+                this.updateCardDisplay();
+                this.updateCalculatorNumbers();
+            }
+
+            getNumbersFromDB() {
+                var customDB = this.parseCustomDatabase();
+                if (customDB.length > 0) {
+                    var idx = Math.floor(Math.random() * customDB.length);
+                    return customDB[idx];
+                }
+                
+                var levelDB = this.difficultyDB[this.settings.difficultyLevel];
+                if (levelDB && levelDB.length > 0) {
+                    var idx2 = Math.floor(Math.random() * levelDB.length);
+                    return levelDB[idx2];
+                }
+                
+                return null;
+            }
+
+            parseCustomDatabase(level) {
+                var result = [];
+                var levelKey = level || this.settings.difficultyLevel;
+                var text = '';
+                
+                if (levelKey === 'easy') {
+                    text = this.settings.customDatabaseEasy;
+                } else if (levelKey === 'medium') {
+                    text = this.settings.customDatabaseMedium;
+                } else if (levelKey === 'hard') {
+                    text = this.settings.customDatabaseHard;
+                }
+                
+                if (!text || text.trim() === '') {
+                    return result;
+                }
+                
+                var maxNum = this.settings.numberRange === '1-13' ? 13 : 10;
+                
+                var lines = text.split('\n');
+                for (var i = 0; i < lines.length; i++) {
+                    var line = lines[i].trim();
+                    if (line === '') continue;
+                    
+                    var parts = line.split(',');
+                    if (parts.length !== 4) continue;
+                    
+                    var nums = [];
+                    var valid = true;
+                    for (var j = 0; j < 4; j++) {
+                        var num = parseInt(parts[j].trim());
+                        if (isNaN(num) || num < 1 || num > maxNum) {
+                            valid = false;
+                            break;
+                        }
+                        nums.push(num);
+                    }
+                    
+                    if (valid) {
+                        result.push(nums);
+                    }
+                }
+                
+                return result;
+            }
+
+            exportDatabase() {
+                var customDatabaseEasy = document.getElementById('custom-database-easy');
+                var customDatabaseMedium = document.getElementById('custom-database-medium');
+                var customDatabaseHard = document.getElementById('custom-database-hard');
+                
+                var content = '';
+                content += '=== EASY ===\n';
+                content += customDatabaseEasy ? customDatabaseEasy.value : '';
+                content += '\n=== MEDIUM ===\n';
+                content += customDatabaseMedium ? customDatabaseMedium.value : '';
+                content += '\n=== HARD ===\n';
+                content += customDatabaseHard ? customDatabaseHard.value : '';
+                
+                if (!content || content.trim() === '') {
+                    alert('所有题库都为空，无需备份');
+                    return;
+                }
+                
+                var blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+                var url = URL.createObjectURL(blob);
+                var link = document.createElement('a');
+                link.href = url;
+                link.download = 'game24_database_backup.txt';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                
+                alert('题库备份成功！文件已下载。');
+            }
+
+            importDatabaseFromText() {
+                var self = this;
+                
+                var content = prompt('请粘贴题库内容：');
+                if (!content) {
+                    return;
+                }
+                
+                if (!content || content.trim() === '') {
+                    alert('内容为空');
+                    return;
+                }
+                
+                var easyContent = '';
+                var mediumContent = '';
+                var hardContent = '';
+                
+                var lines = content.split(/\r?\n/);
+                var currentSection = '';
+                
+                for (var i = 0; i < lines.length; i++) {
+                    var line = lines[i].trim();
+                    if (line === '=== EASY ===' || line.indexOf('EASY') !== -1) {
+                        currentSection = 'easy';
+                        continue;
+                    } else if (line === '=== MEDIUM ===' || line.indexOf('MEDIUM') !== -1) {
+                        currentSection = 'medium';
+                        continue;
+                    } else if (line === '=== HARD ===' || line.indexOf('HARD') !== -1) {
+                        currentSection = 'hard';
+                        continue;
+                    } else if (line === '' || line.startsWith('===')) {
+                        continue;
+                    }
+                    
+                    if (currentSection === 'easy') {
+                        if (easyContent !== '') easyContent += '\n';
+                        easyContent += line;
+                    } else if (currentSection === 'medium') {
+                        if (mediumContent !== '') mediumContent += '\n';
+                        mediumContent += line;
+                    } else if (currentSection === 'hard') {
+                        if (hardContent !== '') hardContent += '\n';
+                        hardContent += line;
+                    }
+                }
+                
+                var customDatabaseEasy = document.getElementById('custom-database-easy');
+                var customDatabaseMedium = document.getElementById('custom-database-medium');
+                var customDatabaseHard = document.getElementById('custom-database-hard');
+                
+                if (customDatabaseEasy) customDatabaseEasy.value = easyContent;
+                if (customDatabaseMedium) customDatabaseMedium.value = mediumContent;
+                if (customDatabaseHard) customDatabaseHard.value = hardContent;
+                
+                self.settings.customDatabaseEasy = easyContent;
+                self.settings.customDatabaseMedium = mediumContent;
+                self.settings.customDatabaseHard = hardContent;
+                
+                self.loadSettings();
+                
+                var count = 0;
+                if (easyContent) count++;
+                if (mediumContent) count++;
+                if (hardContent) count++;
+                alert('题库恢复成功！共恢复 ' + count + ' 个难度的题库');
+            }
+
+            importDatabase(file) {
+                var self = this;
+                
+                if (!file) {
+                    alert('未选择文件');
+                    return;
+                }
+                
+                alert('正在读取文件...');
+                
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        var content = e.target.result;
+                        
+                        if (!content || content.trim() === '') {
+                            alert('文件内容为空');
+                            return;
+                        }
+                        
+                        var easyContent = '';
+                        var mediumContent = '';
+                        var hardContent = '';
+                        
+                        var lines = content.split(/\r?\n/);
+                        var currentSection = '';
+                        
+                        for (var i = 0; i < lines.length; i++) {
+                            var line = lines[i].trim();
+                            if (line === '=== EASY ===' || line.indexOf('EASY') !== -1) {
+                                currentSection = 'easy';
+                                continue;
+                            } else if (line === '=== MEDIUM ===' || line.indexOf('MEDIUM') !== -1) {
+                                currentSection = 'medium';
+                                continue;
+                            } else if (line === '=== HARD ===' || line.indexOf('HARD') !== -1) {
+                                currentSection = 'hard';
+                                continue;
+                            } else if (line === '' || line.startsWith('===')) {
+                                continue;
+                            }
+                            
+                            if (currentSection === 'easy') {
+                                if (easyContent !== '') easyContent += '\n';
+                                easyContent += line;
+                            } else if (currentSection === 'medium') {
+                                if (mediumContent !== '') mediumContent += '\n';
+                                mediumContent += line;
+                            } else if (currentSection === 'hard') {
+                                if (hardContent !== '') hardContent += '\n';
+                                hardContent += line;
+                            }
+                        }
+                        
+                        var customDatabaseEasy = document.getElementById('custom-database-easy');
+                        var customDatabaseMedium = document.getElementById('custom-database-medium');
+                        var customDatabaseHard = document.getElementById('custom-database-hard');
+                        
+                        if (customDatabaseEasy) customDatabaseEasy.value = easyContent;
+                        if (customDatabaseMedium) customDatabaseMedium.value = mediumContent;
+                        if (customDatabaseHard) customDatabaseHard.value = hardContent;
+                        
+                        self.settings.customDatabaseEasy = easyContent;
+                        self.settings.customDatabaseMedium = mediumContent;
+                        self.settings.customDatabaseHard = hardContent;
+                        
+                        self.loadSettings();
+                        
+                        var count = 0;
+                        if (easyContent) count++;
+                        if (mediumContent) count++;
+                        if (hardContent) count++;
+                        alert('题库恢复成功！共恢复 ' + count + ' 个难度的题库');
+                    } catch (error) {
+                        alert('解析文件失败: ' + error.message);
+                    }
+                };
+                reader.onerror = function() {
+                    alert('读取文件失败，请重试');
+                };
+                reader.onabort = function() {
+                    alert('文件读取已取消');
+                };
+                reader.readAsText(file, 'UTF-8');
+            }
+
+            updateCalculatorNumbers() {
+                document.getElementById('calc-num1').value = this.currentNumbers[0];
+                document.getElementById('calc-num2').value = this.currentNumbers[1];
+                document.getElementById('calc-num3').value = this.currentNumbers[2];
+                document.getElementById('calc-num4').value = this.currentNumbers[3];
+            }
+
+            updateCardDisplay() {
+                for (var i = 0; i < 4; i++) {
+                    var card = document.getElementById('card-' + i);
+                    var displayValue = this.cardValues[i];
+                    if (displayValue === 0) {
+                        card.style.visibility = 'hidden';
+                        continue;
+                    }
+                    if (typeof displayValue === 'number') {
+                        if (this.settings.numberRange === '1-13') {
+                            if (displayValue === 11) displayValue = 'J';
+                            else if (displayValue === 12) displayValue = 'Q';
+                            else if (displayValue === 13) displayValue = 'K';
+                        }
+                    }
+                    card.textContent = displayValue;
+                    card.classList.remove('selected');
+                    card.style.visibility = 'visible';
+                    card.classList.add('pulse');
+                    setTimeout(function() { card.classList.remove('pulse'); }, 300);
+                }
+            }
+
+            resetGameState() {
+                this.selectedCards = [];
+                this.operator = '';
+                this.history = [];
+                this.updateStepDisplay();
+            }
+
+            selectCard(card) {
+                var cardIndex = parseInt(card.dataset.index);
+
+                if (card.style.visibility === 'hidden') return;
+                if (card.classList.contains('selected')) return;
+                if (this.selectedCards.length >= 2) return;
+
+                var value = this.cardValues[cardIndex];
+
+                if (!this.operator) {
+                    card.classList.add('selected');
+                    this.selectedCards = [{ value: value, cardIndex: cardIndex }];
+                } else {
+                    card.classList.add('selected');
+                    this.selectedCards.push({ value: value, cardIndex: cardIndex });
+                    this.autoCalculate();
+                }
+                this.updateStepDisplay();
+            }
+
+            selectOperator(op) {
+                if (this.selectedCards.length !== 1) return;
+                this.operator = op;
+                this.updateStepDisplay();
+            }
+
+            autoCalculate() {
+                if (this.selectedCards.length !== 2 || !this.operator) return;
+
+                var idx1 = this.selectedCards[0].cardIndex;
+                var idx2 = this.selectedCards[1].cardIndex;
+                var num1 = this.cardValues[idx1];
+                var num2 = this.cardValues[idx2];
+                var result;
+
+                var num1IsFraction = typeof num1 === 'string';
+                var num2IsFraction = typeof num2 === 'string';
+
+                var num1Value = num1;
+                var num2Value = num2;
+
+                if (num1IsFraction) {
+                    var parts1 = num1.split('/');
+                    num1Value = parseInt(parts1[0]) / parseInt(parts1[1]);
+                }
+                if (num2IsFraction) {
+                    var parts2 = num2.split('/');
+                    num2Value = parseInt(parts2[0]) / parseInt(parts2[1]);
+                }
+
+                if (num1 === 0 || num2 === 0) {
+                    this.resetSelection();
+                    return;
+                }
+
+                if (this.operator === '+') {
+                    result = num1Value + num2Value;
+                    if (Math.abs(result - Math.round(result)) < 0.0001) {
+                        result = Math.round(result);
+                    } else {
+                        result = this.decimalToFraction(result);
+                    }
+                } else if (this.operator === '-') {
+                    result = num1Value - num2Value;
+                    if (Math.abs(result - Math.round(result)) < 0.0001) {
+                        result = Math.round(result);
+                    } else {
+                        result = this.decimalToFraction(result);
+                    }
+                } else if (this.operator === '×') {
+                    result = num1Value * num2Value;
+                    if (Math.abs(result - Math.round(result)) < 0.0001) {
+                        result = Math.round(result);
+                    } else {
+                        result = this.decimalToFraction(result);
+                    }
+                } else if (this.operator === '÷') {
+                    if (num2Value === 0) {
+                        this.showResult('错误', '除数不能为零');
+                        this.resetSelection();
+                        return;
+                    }
+                    if (Math.abs(num1Value % num2Value) < 0.0001) {
+                        result = num1Value / num2Value;
+                    } else {
+                        var numerator, denominator;
+                        if (num1IsFraction && num2IsFraction) {
+                            var p1 = num1.split('/');
+                            var p2 = num2.split('/');
+                            numerator = parseInt(p1[0]) * parseInt(p2[1]);
+                            denominator = parseInt(p1[1]) * parseInt(p2[0]);
+                        } else if (num1IsFraction) {
+                            var p1 = num1.split('/');
+                            numerator = parseInt(p1[0]);
+                            denominator = parseInt(p1[1]) * num2Value;
+                        } else if (num2IsFraction) {
+                            var p2 = num2.split('/');
+                            numerator = num1Value * parseInt(p2[1]);
+                            denominator = parseInt(p2[0]);
+                        } else {
+                            numerator = num1Value;
+                            denominator = num2Value;
+                        }
+                        
+                        if (denominator !== 0) {
+                            var gcdVal = this.gcd(Math.abs(numerator), Math.abs(denominator));
+                            numerator = numerator / gcdVal;
+                            denominator = denominator / gcdVal;
+                        }
+                        
+                        if (denominator < 0) {
+                            numerator = -numerator;
+                            denominator = -denominator;
+                        }
+                        
+                        if (numerator === 0) {
+                            result = 0;
+                        } else if (denominator === 1) {
+                            result = numerator;
+                        } else if (denominator !== 0) {
+                            result = numerator + '/' + denominator;
+                        } else {
+                            result = this.decimalToFraction(num1Value / num2Value);
+                        }
+                    }
+                } else {
+                    this.showResult('错误', '未知运算符');
+                    this.resetSelection();
+                    return;
+                }
+
+                if (typeof result === 'number' && !isFinite(result)) {
+                    this.showResult('错误', '计算结果无效');
+                    this.resetSelection();
+                    return;
+                }
+
+                var cardValuesCopy = [];
+                for (var k = 0; k < this.cardValues.length; k++) {
+                    cardValuesCopy[k] = this.cardValues[k];
+                }
+                this.history.push({ cardValues: cardValuesCopy });
+
+                this.updateCardsAfterCalculation(result, idx1, idx2);
+
+                this.resetSelection();
+            }
+
+            gcd(a, b) {
+                a = Math.abs(a);
+                b = Math.abs(b);
+                while (b !== 0) {
+                    var t = b;
+                    b = a % b;
+                    a = t;
+                }
+                return a;
+            }
+
+            decimalToFraction(value) {
+                if (Number.isInteger(value)) {
+                    return value;
+                }
+                var tolerance = 1.0E-6;
+                var h1 = 1, h2 = 0, k1 = 0, k2 = 1;
+                var b = value;
+                do {
+                    var a = Math.floor(b);
+                    var aux = h1;
+                    h1 = a * h1 + h2;
+                    h2 = aux;
+                    aux = k1;
+                    k1 = a * k1 + k2;
+                    k2 = aux;
+                    b = 1 / (b - a);
+                } while (Math.abs(value - h1 / k1) > value * tolerance);
+
+                var g = this.gcd(h1, k1);
+                h1 = h1 / g;
+                k1 = k1 / g;
+                
+                if (k1 < 0) {
+                    h1 = -h1;
+                    k1 = -k1;
+                }
+                
+                if (h1 === 0) {
+                    return 0;
+                } else if (k1 === 1) {
+                    return h1;
+                } else {
+                    return h1 + '/' + k1;
+                }
+            }
+
+            updateCardsAfterCalculation(result, idx1, idx2) {
+                this.cardValues[idx1] = result;
+                this.cardValues[idx2] = 0;
+
+                this.updateCardDisplay();
+
+                var visibleCount = 0;
+                var finalResult = 0;
+                var isFraction = false;
+                for (var i = 0; i < this.cardValues.length; i++) {
+                    if (this.cardValues[i] !== 0) {
+                        visibleCount++;
+                        finalResult = this.cardValues[i];
+                        if (typeof finalResult === 'string') {
+                            isFraction = true;
+                        }
+                    }
+                }
+
+                if (visibleCount === 1) {
+                    var is24 = false;
+                    if (typeof finalResult === 'number') {
+                        if (finalResult === 24 || (finalResult >= 23.9999 && finalResult <= 24.0001)) {
+                            is24 = true;
+                        }
+                    } else if (typeof finalResult === 'string') {
+                        var parts = finalResult.split('/');
+                        if (parts.length === 2) {
+                            var numerator = parseInt(parts[0]);
+                            var denominator = parseInt(parts[1]);
+                            if (denominator !== 0 && numerator / denominator === 24) {
+                                is24 = true;
+                            }
+                        }
+                    }
+
+                    var self = this;
+                    setTimeout(function() {
+                        if (is24) {
+                            var points = self.calculateScore();
+                            self.score += points;
+                            var scoreDisplay = document.getElementById('score-display');
+                            if (scoreDisplay) {
+                                scoreDisplay.textContent = self.score;
+                            }
+                            self.saveGameHistory(points);
+                            self.showResult('成功', '恭喜！用时 ' + self.timer + ' 秒，获得 ' + points + ' 分');
+                        } else {
+                            self.showResult('失败', '结果是 ' + finalResult + '，不是24');
+                        }
+                    }, 100);
+                }
+            }
+
+            resetSelection() {
+                var selectedCards = document.querySelectorAll('.card.selected');
+                for (var i = 0; i < selectedCards.length; i++) {
+                    selectedCards[i].classList.remove('selected');
+                }
+                this.selectedCards = [];
+                this.operator = '';
+                this.updateStepDisplay();
+            }
+
+            redo() {
+                this.cardValues = [];
+                for (var i = 0; i < this.currentNumbers.length; i++) {
+                    this.cardValues[i] = this.currentNumbers[i];
+                }
+                var newCardValues = [];
+                for (var j = 0; j < this.cardValues.length; j++) {
+                    newCardValues[j] = this.cardValues[j];
+                }
+                this.history = [{ cardValues: newCardValues }];
+                this.updateCardDisplay();
+                this.resetSelection();
+            }
+
+            updateStepDisplay() {
+                if (this.selectedCards.length === 0) {
+                    document.getElementById('step-text').textContent = '选择第一个数字';
+                } else if (this.selectedCards.length === 1) {
+                    if (!this.operator) {
+                        document.getElementById('step-text').textContent = '选择运算符';
+                    } else {
+                        document.getElementById('step-text').textContent = '选择第二个数字';
+                    }
+                } else if (this.selectedCards.length === 2) {
+                    document.getElementById('step-text').textContent = '计算中...';
+                }
+            }
+
+            startTimer() {
+                this.timer = 0;
+                this.updateTimerDisplay();
+                this.timerInterval = setInterval(() => {
+                    this.timer++;
+                    this.updateTimerDisplay();
+                }, 1000);
+            }
+
+            resetTimer() {
+                clearInterval(this.timerInterval);
+                this.timer = 0;
+                this.updateTimerDisplay();
+            }
+
+            updateTimerDisplay() {
+                const minutes = Math.floor(this.timer / 60);
+                const seconds = this.timer % 60;
+                document.getElementById('timer-display').textContent =
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            calculateScore() {
+                if (this.timer <= 10) return 10;
+                if (this.timer <= 30) return 8;
+                if (this.timer <= 60) return 5;
+                return 3;
+            }
+
+            saveGameHistory(points) {
+                const record = {
+                    date: new Date().toLocaleString(),
+                    numbers: this.currentNumbers.join(','),
+                    time: this.timer,
+                    points: points
+                };
+                var gameHistory = JSON.parse(localStorage.getItem('game24History')) || [];
+                gameHistory.unshift(record);
+                if (gameHistory.length > 10) {
+                    gameHistory = gameHistory.slice(0, 10);
+                }
+                localStorage.setItem('game24History', JSON.stringify(gameHistory));
+            }
+
+            updateHistoryDisplay() {
+                const historyList = document.getElementById('history-list');
+                historyList.innerHTML = '';
+
+                const gameHistory = JSON.parse(localStorage.getItem('game24History')) || [];
+                if (gameHistory.length === 0) {
+                    historyList.innerHTML = '<p>暂无历史记录</p>';
+                    return;
+                }
+
+                gameHistory.forEach((record, index) => {
+                    const item = document.createElement('div');
+                    item.style.padding = '8px';
+                    item.style.borderBottom = '1px solid #e0e0e0';
+                    item.innerHTML = `
+                        <strong>第${index + 1}局</strong><br>
+                        日期: ${record.date}<br>
+                        数字: ${record.numbers}<br>
+                        时间: ${record.time}秒 | 得分: ${record.points}分
+                    `;
+                    historyList.appendChild(item);
+                });
+            }
+
+            clearHistory() {
+                localStorage.removeItem('game24History');
+                this.updateHistoryDisplay();
+            }
+
+            solve24() {
+                const num1 = parseInt(document.getElementById('calc-num1').value);
+                const num2 = parseInt(document.getElementById('calc-num2').value);
+                const num3 = parseInt(document.getElementById('calc-num3').value);
+                const num4 = parseInt(document.getElementById('calc-num4').value);
+
+                if (!num1 || !num2 || !num3 || !num4) {
+                    document.getElementById('solution-result').textContent = '请输入4个数字';
+                    return;
+                }
+
+                const numbers = [num1, num2, num3, num4];
+                const solutions = this.find24Solutions(numbers);
+                const resultDiv = document.getElementById('solution-result');
+
+                if (solutions.length === 0) {
+                    resultDiv.textContent = '没有找到解决方案';
+                } else {
+                    resultDiv.textContent = solutions[0];
+                }
+            }
+
+            find24Solutions(numbers) {
+                const operators = ['+', '-', '*', '/'];
+                const solutions = [];
+
+                const permutations = this.getPermutations(numbers);
+
+                for (const nums of permutations) {
+                    for (let op1 of operators) {
+                        for (let op2 of operators) {
+                            for (let op3 of operators) {
+                                const expressions = [
+                                    `(${nums[0]}${op1}${nums[1]})${op2}(${nums[2]}${op3}${nums[3]})`,
+                                    `(((${nums[0]}${op1}${nums[1]})${op2}${nums[2]})${op3}${nums[3]})`,
+                                    `(${nums[0]}${op1}(${nums[1]}${op2}${nums[2]}))${op3}${nums[3]}`,
+                                    `${nums[0]}${op1}(((${nums[1]}${op2}${nums[2]})${op3}${nums[3]}))`,
+                                    `${nums[0]}${op1}(${nums[1]}${op2}(${nums[2]}${op3}${nums[3]}))`
+                                ];
+
+                                for (const expr of expressions) {
+                                    try {
+                                        const result = eval(expr);
+                                        if (Math.abs(result - 24) < 0.0001) {
+                                            let formattedExpr = expr
+                                                .replace(/\*/g, '×')
+                                                .replace(/\//g, '÷');
+                                            if (!solutions.includes(formattedExpr)) {
+                                                solutions.push(formattedExpr);
+                                            }
+                                        }
+                                    } catch (e) {
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return solutions;
+            }
+
+            getPermutations(arr) {
+                if (arr.length === 1) return [arr];
+                const permutations = [];
+                for (let i = 0; i < arr.length; i++) {
+                    const current = arr[i];
+                    const remaining = arr.slice(0, i).concat(arr.slice(i + 1));
+                    for (const perm of this.getPermutations(remaining)) {
+                        permutations.push([current, ...perm]);
+                    }
+                }
+                return permutations;
+            }
+
+            showResult(title, message) {
+                var resultTitle = document.getElementById('result-title');
+                var resultMessage = document.getElementById('result-message');
+                if (resultTitle) {
+                    resultTitle.textContent = title;
+                }
+                if (resultMessage) {
+                    resultMessage.textContent = message;
+                }
+                this.showModal('result-modal');
+                this.resetTimer();
+            }
+
+            showModal(modalId) {
+                var modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.style.display = 'block';
+                }
+            }
+
+            hideModal(modalId) {
+                var modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.style.display = 'none';
+                }
+            }
+
+            switchTab(tabId) {
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+
+                document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            }
+
+            loadSettings() {
+                var numberRange = document.getElementById('number-range');
+                var difficultyLevel = document.getElementById('difficulty-level');
+                var dbProbability = document.getElementById('db-probability');
+                var dbProbabilityValue = document.getElementById('db-probability-value');
+                var customDatabaseEasy = document.getElementById('custom-database-easy');
+                var customDatabaseMedium = document.getElementById('custom-database-medium');
+                var customDatabaseHard = document.getElementById('custom-database-hard');
+                var customDbStatus = document.getElementById('custom-db-status');
+                
+                if (numberRange) numberRange.value = this.settings.numberRange;
+                if (difficultyLevel) difficultyLevel.value = this.settings.difficultyLevel;
+                if (dbProbability) dbProbability.value = this.settings.dbProbability;
+                if (dbProbabilityValue) dbProbabilityValue.textContent = this.settings.dbProbability + '%';
+                if (customDatabaseEasy) customDatabaseEasy.value = this.settings.customDatabaseEasy;
+                if (customDatabaseMedium) customDatabaseMedium.value = this.settings.customDatabaseMedium;
+                if (customDatabaseHard) customDatabaseHard.value = this.settings.customDatabaseHard;
+                
+                // 更新自定义题库状态显示
+                if (customDbStatus) {
+                    var parsedDB = this.parseCustomDatabase();
+                    var levelName = this.settings.difficultyLevel === 'easy' ? '简单' : 
+                                   this.settings.difficultyLevel === 'medium' ? '中等' : '困难';
+                    var statusHtml = '';
+                    if (parsedDB.length === 0) {
+                        statusHtml = '<span style="color: #ff6b6b;">[' + levelName + '难度] 未找到有效的数字组合</span>';
+                    } else {
+                        statusHtml = '<span style="color: #2ed573;">[' + levelName + '难度] 已加载 ' + parsedDB.length + ' 组数字:</span><br>';
+                        for (var i = 0; i < Math.min(parsedDB.length, 5); i++) {
+                            statusHtml += '  • ' + parsedDB[i].join(', ') + '<br>';
+                        }
+                        if (parsedDB.length > 5) {
+                            statusHtml += '  ... 还有 ' + (parsedDB.length - 5) + ' 组';
+                        }
+                    }
+                    customDbStatus.innerHTML = statusHtml;
+                }
+                
+                this.updateCalculatorInputs();
+            }
+
+            saveSettings() {
+                var numberRange = document.getElementById('number-range');
+                var difficultyLevel = document.getElementById('difficulty-level');
+                var dbProbability = document.getElementById('db-probability');
+                var customDatabaseEasy = document.getElementById('custom-database-easy');
+                var customDatabaseMedium = document.getElementById('custom-database-medium');
+                var customDatabaseHard = document.getElementById('custom-database-hard');
+                
+                if (numberRange) this.settings.numberRange = numberRange.value;
+                if (difficultyLevel) this.settings.difficultyLevel = difficultyLevel.value;
+                if (dbProbability) this.settings.dbProbability = parseInt(dbProbability.value) || 50;
+                if (customDatabaseEasy) this.settings.customDatabaseEasy = customDatabaseEasy.value;
+                if (customDatabaseMedium) this.settings.customDatabaseMedium = customDatabaseMedium.value;
+                if (customDatabaseHard) this.settings.customDatabaseHard = customDatabaseHard.value;
+                
+                localStorage.setItem('game24Settings', JSON.stringify(this.settings));
+                
+                // 保存后重新加载设置以更新状态显示
+                this.loadSettings();
+                
+                this.hideModal('settings-modal');
+                this.updateCalculatorInputs();
+                this.startNewGame();
+            }
+
+            updateCalculatorInputs() {
+                var maxNum = this.settings.numberRange === '1-13' ? 13 : 10;
+                document.getElementById('calc-num1').max = maxNum;
+                document.getElementById('calc-num2').max = maxNum;
+                document.getElementById('calc-num3').max = maxNum;
+                document.getElementById('calc-num4').max = maxNum;
+            }
+        }
+
+        window.onload = function() {
+            new Game24();
+        };
+    </script>
+</body>
+</html>
