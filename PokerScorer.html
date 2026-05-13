@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>升级计分表（跨平台推送优化版）</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, sans-serif;
+    }
+    body {
+      margin: 0;
+      padding: 10px;
+      max-width: 800px;
+      margin: 0 auto;
+      background: #f8f9fa;
+    }
+    .page { display: none; }
+    .page.active { display: block; }
+    .title { text-align: center; font-size: 22px; font-weight: bold; margin: 10px 0; color: #2d8cf0; }
+    .form-item { margin: 12px 0; }
+    .section-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #2d8cf0;
+      margin: 16px 0 8px;
+      border-left: 4px solid #2d8cf0;
+      padding-left: 8px;
+    }
+    .form-item label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: bold;
+      font-size: 16px;
+      color: #2d8cf0;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      padding: 10px 16px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background: #2d8cf0;
+      color: white;
+      cursor: pointer;
+      margin: 4px;
+    }
+    button.secondary { background: #666; }
+    button.danger { background: #f56c6c; }
+    button.change { background: #07c160; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    .btn-group { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; justify-content: center; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+      text-align: center;
+      background: white;
+    }
+    th, td {
+      border: 1px solid #333;
+      padding: 8px 4px;
+    }
+    th { background: #f0f0f0; }
+    .max-score {
+      background: #fff3cd;
+      font-weight: bold;
+      color: #856404;
+    }
+    .winner-name {
+      color: red !important;
+      font-weight: bold;
+    }
+    .modal {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      z-index: 999;
+    }
+    .modal.show { display: flex; }
+    .modal-box {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 400px;
+    }
+    .player-item {
+      margin: 14px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+      font-weight: 500;
+    }
+    .player-item input {
+      width: 20px;
+      height: 20px;
+      margin: 0;
+    }
+    .history-item {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin: 8px 0;
+      cursor: pointer;
+      background: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .history-item .left { flex: 1; }
+    .info-bar {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-weight: bold;
+    }
+    .base-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 6px 0;
+    }
+    .base-item span { flex: 1; }
+    .end-time {
+      text-align: right;
+      font-size: 14px;
+      color: #666;
+      margin-top: 4px;
+    }
+    .tip-modal,.confirm-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.45);display:flex;justify-content:center;align-items:center;z-index:9999;}
+    .tip-box,.confirm-box{background:#fff;width:90%;max-width:360px;border-radius:14px;overflow:hidden;}
+    .tip-body,.confirm-body{padding:24px 20px 18px;text-align:center;font-size:16px;}
+    .tip-footer{border-top:1px solid #eee;text-align:center;}
+    .tip-footer button{width:100%;border:none;padding:14px;font-size:16px;background:none;color:#2d8cf0;font-weight:500;}
+    .confirm-footer{display:flex;border-top:1px solid #eee;}
+    .confirm-footer button{flex:1;border:none;padding:14px;font-size:16px;background:none;}
+    .confirm-cancel{color:#666;border-right:1px solid #eee;}
+    .confirm-ok{color:#f56c6c;font-weight:500;}
+
+    .flash-text {
+      color: red !important;
+      font-weight: bold;
+      font-size: 19px;
+      animation: flash 0.7s infinite alternate;
+    }
+    @keyframes flash {
+      from { opacity: 1; } to { opacity: 0.4; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="page-create" class="page active">
+  <div class="title">新建对局</div>
+
+  <div class="section-title">地点</div>
+  <div class="form-item">
+    <select id="location"></select>
+  </div>
+
+  <div class="section-title">起始等级</div>
+  <div class="form-item">
+    <select id="startLevel"></select>
+  </div>
+
+  <div class="section-title">选择玩家</div>
+  <div id="players-container"></div>
+
+  <button id="btn-start" style="width:100%;margin-top:20px">开始记分</button>
+  <button id="go-setting" class="secondary" style="width:100%">系统设定</button>
+  <button id="go-history" class="secondary" style="width:100%">历史记录</button>
+</div>
+
+<div id="page-setting" class="page">
+  <div class="title">系统初始化</div>
+
+  <div class="section-title">玩家数量（默认5）</div>
+  <div class="form-item">
+    <input type="number" id="playerCount" min="2" max="10" placeholder="2-10人">
+  </div>
+
+  <div class="section-title">发送者令牌（PushPlus）</div>
+  <div class="form-item">
+    <input type="text" id="pushMasterToken" placeholder="输入PushPlus发送者令牌">
+  </div>
+
+  <div class="section-title">地点管理</div>
+  <div class="form-item">
+    <div id="location-list"></div>
+    <input id="new-location" placeholder="输入新地点">
+    <button id="add-location" style="width:100%">添加地点</button>
+  </div>
+
+  <div class="section-title">玩家管理</div>
+  <div class="form-item">
+    <div id="player-list"></div>
+    <div style="display: flex; gap: 8px; margin-top: 8px;">
+      <input id="new-player" placeholder="输入新玩家" style="flex: 1;">
+      <input id="new-player-token" placeholder="令牌（可选）" style="flex: 1;">
+    </div>
+    <button id="add-player" style="width:100%; margin-top: 8px;">添加玩家</button>
+  </div>
+
+  <div class="section-title">备份与恢复</div>
+  <div style="display: flex; gap: 8px;">
+    <button id="btn-backup" style="flex:1; background:#07c160;">💾 备份</button>
+    <button id="btn-restore" style="flex:1; background:#f56c6c;">🔄 恢复</button>
+  </div>
+  <input type="file" id="restore-file" accept=".json" style="display:none;">
+
+  <button id="go-back" style="width:100%;margin-top:20px">返回</button>
+</div>
+
+<div id="page-game" class="page">
+  <div class="info-bar">
+    <div id="game-title"></div>
+    <div id="game-status"></div>
+  </div>
+  <table id="score-table"></table>
+  <div id="end-time-display" class="end-time"></div>
+  <div class="btn-group">
+    <button id="btn-add-round">记分</button>
+    <button id="btn-manage" class="change">换人</button>
+    <button id="btn-edit-last" class="secondary">修改</button>
+    <button id="btn-end" class="danger">冲线</button>
+  </div>
+</div>
+
+<div id="page-history" class="page">
+  <div class="title">历史对局</div>
+  <div class="form-item">
+    <input id="search" placeholder="搜索玩家/地点">
+  </div>
+  <div id="history-list"></div>
+  <button id="go-new" style="width:100%">开始新对局</button>
+</div>
+
+<div class="modal" id="modal-round">
+  <div class="modal-box">
+    <div class="title" id="round-title"></div>
+    <div id="round-players"></div>
+    <div class="form-item">
+      <label>升级数（可正可负）</label>
+      <input type="number" id="add-level" placeholder="请输入升级数">
+    </div>
+    <div class="btn-group">
+      <button id="btn-confirm-round">确认</button>
+      <button id="btn-cancel-round" class="secondary">取消</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal-manage">
+  <div class="modal-box">
+    <div class="title">玩家</div>
+    <div id="manage-players-container"></div>
+    <button id="btn-save-manage">保存</button>
+    <button id="btn-cancel-manage" class="secondary">取消</button>
+  </div>
+</div>
+
+<div class="modal" id="modal-edit-player">
+  <div class="modal-box">
+    <div class="title">编辑玩家令牌</div>
+    <div class="form-item">
+      <label>玩家名称</label>
+      <input type="text" id="edit-player-name" readonly>
+    </div>
+    <div class="form-item">
+      <label>令牌</label>
+      <input type="text" id="edit-player-token" placeholder="输入令牌">
+    </div>
+    <div class="btn-group">
+      <button id="btn-save-edit-token">保存</button>
+      <button id="btn-cancel-edit" class="secondary">取消</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal-history-detail">
+  <div class="modal-box">
+    <div id="history-detail-content"></div>
+    <button id="btn-close-history" class="secondary" style="width:100%">关闭</button>
+  </div>
+</div>
+
+<div class="modal" id="modal-edit-last">
+  <div class="modal-box">
+    <div class="title" id="edit-last-title">修改最后一盘分数</div>
+    <div id="edit-last-players"></div>
+    <div class="btn-group">
+      <button id="btn-confirm-edit-last">确认修改</button>
+      <button id="btn-cancel-edit-last" class="secondary">取消</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const levelSymbols = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const STORAGE_KEY = 'upgrade_score_games';
+const BASE_KEY = 'upgrade_score_base';
+const LAST_GAME_KEY = 'last_game_data';
+const WIN_CONDITION_STEP = 12;
+const PUSHPLUS_SETTINGS_KEY = 'pushplus_master_token';
+
+const dom = {
+  pages: document.querySelectorAll('.page'),
+  locationSelect: document.getElementById('location'),
+  startLevelSelect: document.getElementById('startLevel'),
+  playersContainer: document.getElementById('players-container'),
+  scoreTable: document.getElementById('score-table'),
+  gameTitle: document.getElementById('game-title'),
+  gameStatus: document.getElementById('game-status'),
+  endTimeDisplay: document.getElementById('end-time-display'),
+  historyList: document.getElementById('history-list'),
+  searchInput: document.getElementById('search'),
+  playerCountInput: document.getElementById('playerCount'),
+  newPlayerToken: document.getElementById('new-player-token'),
+  editPlayerName: document.getElementById('edit-player-name'),
+  editPlayerToken: document.getElementById('edit-player-token'),
+};
+
+const utils = {
+  toSymbol(num) {
+    const idx = ((Number(num) - 1) % 13 + 13) % 13;
+    return levelSymbols[idx];
+  },
+  toNumber(sym) {
+    return levelSymbols.indexOf(sym) + 1;
+  },
+  nowStr() {
+    return new Date().toISOString();
+  },
+  formatTime(isoStr) {
+    if (!isoStr) return '';
+    const d = new Date(isoStr);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  },
+  gameId(location) {
+    const d = new Date();
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const timeStr = `${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`;
+    return `${dateStr}_${timeStr}_${location}`;
+  }
+};
+
+const storage = {
+  loadGames() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch { return []; }
+  },
+  saveGames(games) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(games));
+  },
+  loadBase() {
+    try {
+      const base = JSON.parse(localStorage.getItem(BASE_KEY)) || { locations: [], players: [], playerCount: 5 };
+      if (Array.isArray(base.players) && base.players.every(p => typeof p === 'string')) {
+        base.players = base.players.map(name => ({ name, token: '' }));
+        this.saveBase(base);
+      }
+      return base;
+    } catch {
+      return { locations: [], players: [], playerCount: 5 };
+    }
+  },
+  saveBase(base) {
+    localStorage.setItem(BASE_KEY, JSON.stringify(base));
+  },
+  saveLastGame(location, players) {
+    const playerNames = players.map(p => typeof p === 'object' ? p.name : p);
+    localStorage.setItem(LAST_GAME_KEY, JSON.stringify({ location, players: playerNames }));
+  },
+  loadLastGame() {
+    try { return JSON.parse(localStorage.getItem(LAST_GAME_KEY)) || { location: '', players: [] }; }
+    catch { return { location: '', players: [] }; }
+  },
+  updateCurrentGame(game) {
+    const games = this.loadGames();
+    const idx = games.findIndex(g => g.id === game.id);
+    if (idx >= 0) games[idx] = game;
+    this.saveGames(games);
+  },
+  updatePlayerToken(name, newToken) {
+    const base = this.loadBase();
+    const idx = base.players.findIndex(p => p.name === name);
+    if (idx >= 0) {
+      base.players[idx].token = newToken.trim();
+      this.saveBase(base);
+    }
+  },
+  savePushMasterToken(token) {
+    localStorage.setItem(PUSHPLUS_SETTINGS_KEY, token.trim());
+  },
+  loadPushMasterToken() {
+    return localStorage.getItem(PUSHPLUS_SETTINGS_KEY) || "9a4ebbdd3f854935b8981db8608af705";
+  },
+  backupAll() {
+    const data = {
+      base: this.loadBase(),
+      games: this.loadGames(),
+      lastGame: this.loadLastGame(),
+      pushToken: this.loadPushMasterToken()
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const date = new Date().toISOString().split('T')[0];
+    a.download = `计分表备份_${date}.json`;
+    a.href = url;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+  restoreAll(data) {
+    if (data.base) this.saveBase(data.base);
+    if (data.games) this.saveGames(data.games);
+    if (data.lastGame) localStorage.setItem(LAST_GAME_KEY, JSON.stringify(data.lastGame));
+    if (data.pushToken) this.savePushMasterToken(data.pushToken);
+  }
+};
+
+const modal = {
+  confirm(message, callback) {
+    const wrap = document.createElement('div');
+    wrap.className = 'confirm-modal';
+    wrap.innerHTML = `
+      <div class="confirm-box">
+        <div class="confirm-body">${message}</div>
+        <div class="confirm-footer">
+          <button class="confirm-cancel">取消</button>
+          <button class="confirm-ok">确认</button>
+        </div>
+      </div>`;
+    document.body.appendChild(wrap);
+    wrap.querySelector('.confirm-cancel').onclick = () => { document.body.removeChild(wrap); callback(false); };
+    wrap.querySelector('.confirm-ok').onclick = () => { document.body.removeChild(wrap); callback(true); };
+  },
+  tip(msg) {
+    const wrap = document.createElement('div');
+    wrap.className = 'tip-modal';
+    wrap.innerHTML = `
+      <div class="tip-box">
+        <div class="tip-body">${msg}</div>
+        <div class="tip-footer">
+          <button class="tip-ok">确定</button>
+        </div>
+      </div>`;
+    document.body.appendChild(wrap);
+    wrap.querySelector('.tip-ok').onclick = () => { document.body.removeChild(wrap); };
+  },
+  openEditPlayer(player) {
+    dom.editPlayerName.value = player.name;
+    dom.editPlayerToken.value = player.token || '';
+    document.getElementById('modal-edit-player').classList.add('show');
+  }
+};
+
+const gameRules = {
+  getWinnerInfo(game) {
+    if (!game || !game.levelGrid?.length) return { name: '获胜者', maxLevel:0, targetLevel:0 };
+    const target = game.startLevel + WIN_CONDITION_STEP;
+    const lastLevels = game.levelGrid.at(-1) || [];
+    let maxLevel = Math.max(...lastLevels);
+    let winnerIndex = lastLevels.findIndex(lv => lv === maxLevel);
+    return {
+      name: game.players[winnerIndex] || '获胜者',
+      maxLevel, targetLevel: target
+    };
+  },
+  checkAutoWin(game) {
+    if (!game || game.meta?.status !== 'in_progress') return false;
+    const { maxLevel, targetLevel } = this.getWinnerInfo(game);
+    const lastLevels = game.levelGrid.at(-1) || [];
+    const maxCount = lastLevels.filter(lv => lv === maxLevel).length;
+    return maxCount === 1 && maxLevel >= targetLevel;
+  }
+};
+
+let currentGame = null;
+let editingPlayerName = '';
+
+function showPage(id) {
+  dom.pages.forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function refreshPlayerSelects(selector, values) {
+  const base = storage.loadBase();
+  const list = document.querySelectorAll(selector);
+  list.forEach((sel, idx) => {
+    const current = values[idx] || '';
+    const used = values.filter((v, i) => i !== idx && v);
+    sel.innerHTML = '<option value="">请选择玩家</option>';
+    base.players.forEach(p => {
+      if (used.includes(p.name)) return;
+      const opt = document.createElement('option');
+      opt.value = p.name;
+      opt.textContent = p.name;
+      if (p.name === current) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.onchange = () => {
+      refreshPlayerSelects(selector, Array.from(list).map(s => s.value));
+    };
+  });
+}
+
+function initCreatePage() {
+  const base = storage.loadBase();
+  const last = storage.loadLastGame();
+  const count = base.playerCount || 5;
+
+  dom.locationSelect.innerHTML = '<option value="">请选择地点</option>';
+  base.locations.forEach(loc => {
+    const opt = document.createElement('option');
+    opt.value = loc;
+    opt.textContent = loc;
+    if (loc === last.location) opt.selected = true;
+    dom.locationSelect.appendChild(opt);
+  });
+
+  dom.startLevelSelect.innerHTML = '<option value="">请选择等级</option>';
+  levelSymbols.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s;
+    opt.textContent = s;
+    dom.startLevelSelect.appendChild(opt);
+  });
+
+  dom.playersContainer.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const item = document.createElement('div');
+    item.className = 'form-item';
+    item.innerHTML = `<label>玩家${i+1}</label><select class="create-player" data-i="${i}"></select>`;
+    dom.playersContainer.appendChild(item);
+  }
+
+  const lastPlayers = last.players || [];
+  const initPlayers = [];
+  for (let i = 0; i < count; i++) {
+    initPlayers.push(lastPlayers[i] || '');
+  }
+  refreshPlayerSelects('.create-player', initPlayers);
+}
+
+function initSettingPage() {
+  const base = storage.loadBase();
+  dom.playerCountInput.value = base.playerCount || 5;
+
+  const locationList = document.getElementById('location-list');
+  const playerList = document.getElementById('player-list');
+  locationList.innerHTML = '';
+  base.locations.forEach(loc => {
+    const div = document.createElement('div');
+    div.className = 'base-item';
+    div.innerHTML = `<span>${loc}</span><button class="danger del-loc" data-val="${loc}">删除</button>`;
+    locationList.appendChild(div);
+  });
+  playerList.innerHTML = '';
+  base.players.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'base-item';
+    const showText = p.token ? `${p.name}（${p.token}）` : p.name;
+    div.innerHTML = `
+      <span>${showText}</span>
+      <button class="change edit-ply" data-name="${p.name}">令牌</button>
+      <button class="danger del-ply" data-name="${p.name}">删除</button>
+    `;
+    playerList.appendChild(div);
+  });
+
+  document.querySelectorAll('.del-loc').forEach(btn => {
+    btn.onclick = () => {
+      modal.confirm("删除该地点？", ok => {
+        if (!ok) return;
+        base.locations = base.locations.filter(x => x !== btn.dataset.val);
+        storage.saveBase(base);
+        initSettingPage();
+      });
+    };
+  });
+  document.querySelectorAll('.del-ply').forEach(btn => {
+    btn.onclick = () => {
+      modal.confirm("删除该玩家？", ok => {
+        if (!ok) return;
+        base.players = base.players.filter(x => x.name !== btn.dataset.name);
+        storage.saveBase(base);
+        initSettingPage();
+      });
+    };
+  });
+  document.querySelectorAll('.edit-ply').forEach(btn => {
+    btn.onclick = () => {
+      const name = btn.dataset.name;
+      const player = base.players.find(p => p.name === name);
+      if (player) {
+        editingPlayerName = name;
+        modal.openEditPlayer(player);
+      }
+    };
+  });
+
+  const token = storage.loadPushMasterToken();
+  document.getElementById('pushMasterToken').value = token;
+  document.getElementById('pushMasterToken').oninput = function(){
+    storage.savePushMasterToken(this.value);
+  };
+}
+
+function renderGamePage() {
+  if (!currentGame) return;
+  dom.gameTitle.textContent = `对局：${currentGame.name}`;
+  dom.gameStatus.textContent = currentGame.meta.status === 'in_progress' ? '进行中' : '已结束';
+  dom.endTimeDisplay.textContent = currentGame.meta.endedAt
+    ? `结束时间：${utils.formatTime(currentGame.meta.endedAt)}`
+    : '';
+
+  const table = dom.scoreTable;
+  table.innerHTML = '';
+  const lastRow = currentGame.levelGrid.at(-1);
+  const prevRow = currentGame.levelGrid.length > 1 ? currentGame.levelGrid.at(-2) : null;
+  let playerHeaders = '';
+  currentGame.players.forEach((p, i) => {
+    const isScored = currentGame.levelGrid.length > 1 && lastRow[i] > prevRow[i];
+    playerHeaders += `<th class="${isScored ? 'winner-name' : ''}">${p}</th>`;
+  });
+  const thead = document.createElement('thead');
+  thead.innerHTML = `<tr><th>第N盘</th>${playerHeaders}</tr>`;
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  const reversedRows = [...currentGame.levelGrid].reverse();
+  reversedRows.forEach((row, idx) => {
+    const originalIndex = currentGame.levelGrid.length - 1 - idx;
+    const max = Math.max(...row);
+    let tr = `<tr><td>第${originalIndex}盘</td>`;
+    row.forEach(n => { tr += `<td class="${n === max ? 'max-score' : ''}">${utils.toSymbol(n)}</td>`; });
+    tr += '</tr>';
+    tbody.innerHTML += tr;
+  });
+  table.appendChild(tbody);
+
+  const isPlaying = currentGame.meta.status === 'in_progress';
+  const hasMultipleRounds = currentGame.levelGrid.length > 1;
+  document.getElementById('btn-add-round').style.display = isPlaying ? 'inline-block' : 'none';
+  document.getElementById('btn-manage').style.display = isPlaying ? 'inline-block' : 'none';
+  document.getElementById('btn-edit-last').style.display = (isPlaying && hasMultipleRounds) ? 'inline-block' : 'none';
+  document.getElementById('btn-end').style.display = isPlaying ? 'inline-block' : 'none';
+}
+
+function endGame() {
+  currentGame.meta.status = 'completed';
+  currentGame.meta.endedAt = utils.nowStr();
+  storage.updateCurrentGame(currentGame);
+  renderGamePage();
+  pushFinalResult();
+  setTimeout(() => { initCreatePage(); showPage('page-create'); }, 600);
+}
+
+function openEditLastModal() {
+  if (!currentGame || currentGame.levelGrid.length <= 1) {
+    modal.tip('至少需要一盘记录才能修改');
+    return;
+  }
+  const roundNum = currentGame.levelGrid.length - 1;
+  document.getElementById('edit-last-title').textContent = `修改第 ${roundNum} 盘分数`;
+  const box = document.getElementById('edit-last-players');
+  box.innerHTML = currentGame.players.map((p, i) => {
+    const currentLevel = currentGame.levelGrid[roundNum][i];
+    return `
+      <div class="form-item">
+        <label>${p}</label>
+        <select class="edit-level-select" data-i="${i}">
+          ${levelSymbols.map((sym, idx) => {
+            const val = idx + 1;
+            return `<option value="${val}" ${val === currentLevel ? 'selected' : ''}>${sym}</option>`;
+          }).join('')}
+        </select>
+      </div>
+    `;
+  }).join('');
+  document.getElementById('modal-edit-last').classList.add('show');
+}
+
+function confirmEditLast() {
+  const selects = document.querySelectorAll('.edit-level-select');
+  const newLevels = [];
+  selects.forEach(sel => {
+    newLevels.push(Number(sel.value));
+  });
+  // 更新最后一盘
+  currentGame.levelGrid[currentGame.levelGrid.length - 1] = newLevels;
+  storage.updateCurrentGame(currentGame);
+  document.getElementById('modal-edit-last').classList.remove('show');
+  renderGamePage();
+  pushGameResultToPlayer();
+  
+  // 检查是否触发自动胜利
+  if (gameRules.checkAutoWin(currentGame)) {
+    const { name } = gameRules.getWinnerInfo(currentGame);
+    modal.confirm(`<span class="flash-text">${name} 冲线!</span>`, ok => {
+      if (ok) endGame();
+    });
+  }
+}
+
+// 综合sendPush函数，适配手机和PC不同环境
+function sendPush(title, content) {
+  try {
+    const base = storage.loadBase();
+    const tokens = currentGame.players
+      .map(name => base.players.find(p => p.name === name)?.token)
+      .filter(t => t && t.trim());
+    if (tokens.length === 0) return;
+
+    const masterToken = storage.loadPushMasterToken();
+    if (!masterToken) return;
+
+    // 检测是否为移动设备
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // 移动端：使用iframe方式绕过CORS限制
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+      
+      const form = iframe.contentDocument.createElement('form');
+      form.method = 'POST';
+      form.action = 'https://www.pushplus.plus/send';
+      form.target = 'hidden_frame'; // 设置target为隐藏框架
+      
+      // 创建隐藏的目标框架
+      const hiddenFrame = document.createElement('iframe');
+      hiddenFrame.name = 'hidden_frame';
+      hiddenFrame.style.display = 'none';
+      document.body.appendChild(hiddenFrame);
+      
+      const tokenInput = iframe.contentDocument.createElement('input');
+      tokenInput.type = 'hidden';
+      tokenInput.name = 'token';
+      tokenInput.value = masterToken;
+      form.appendChild(tokenInput);
+      
+      const toInput = iframe.contentDocument.createElement('input');
+      toInput.type = 'hidden';
+      toInput.name = 'to';
+      toInput.value = tokens.join(',');
+      form.appendChild(toInput);
+      
+      const titleInput = iframe.contentDocument.createElement('input');
+      titleInput.type = 'hidden';
+      titleInput.name = 'title';
+      titleInput.value = title;
+      form.appendChild(titleInput);
+      
+      const contentInput = iframe.contentDocument.createElement('input');
+      contentInput.type = 'hidden';
+      contentInput.name = 'content';
+      contentInput.value = content;
+      form.appendChild(contentInput);
+      
+      const templateInput = iframe.contentDocument.createElement('input');
+      templateInput.type = 'hidden';
+      templateInput.name = 'template';
+      templateInput.value = 'html';
+      form.appendChild(templateInput);
+      
+      iframe.contentDocument.body.appendChild(form);
+      form.submit();
+      
+      // 清理iframe
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+        document.body.removeChild(hiddenFrame);
+      }, 1000);
+    } else {
+      // PC端：使用fetch方式，更简洁
+      fetch("https://www.pushplus.plus/send", {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: masterToken,
+          to: tokens.join(','),
+          title: title,
+          content: content,
+          template: "html"
+        })
+      }).catch(err => console.log('PC端推送失败:', err));
+    }
+  } catch (e) {
+    console.error('推送异常:', e);
+  }
+}
+
+function getRankedList(players, scores) {
+  let list = players.map((name, i) => ({ name, score: scores[i] }));
+  list.sort((a, b) => b.score - a.score);
+  const ranks = [];
+  for (let i = 0; i < list.length; i++) {
+    if (i > 0 && list[i].score === list[i - 1].score) {
+      ranks.push(ranks[i - 1]);
+    } else {
+      ranks.push(i + 1);
+    }
+  }
+  return list.map((item, i) => {
+    const rank = ranks[i];
+    const isTie = i > 0 && list[i].score === list[i - 1].score;
+    return {
+      ...item,
+      rank,
+      isTie,
+      rankText: isTie ? `并列第${rank}名` : `第${rank}名`
+    };
+  });
+}
+
+function pushGameResultToPlayer() {
+  const bowlNum = currentGame.levelGrid.length - 1;
+  const playerList = currentGame.players;
+  const scoreList = currentGame.levelGrid.at(-1);
+  const ranked = getRankedList(playerList, scoreList);
+
+  let html = `<div style='padding:10px;font-size:16px;'>`;
+  html += `<h3 style='color:#2d8cf0;text-align:center;'>第 ${bowlNum} 盘记分完成</h3>`;
+  ranked.forEach(item => {
+    const sym = utils.toSymbol(item.score);
+    html += `<div style='padding:6px 0;border-bottom:1px solid #eee;'>
+              ${item.rankText}：<strong>${item.name}</strong> &nbsp; 当前：<span style='color:red;font-size:18px;'>${sym}</span>
+            </div>`;
+  });
+  html += `</div>`;
+  sendPush(`第${bowlNum}盘实时排名`, html);
+}
+
+function pushFinalResult() {
+  const playerList = currentGame.players;
+  const scoreList = currentGame.levelGrid.at(-1);
+  const ranked = getRankedList(playerList, scoreList);
+  const winnerGroup = ranked.filter(x => x.rank === 1);
+  const winnerText = winnerGroup.length > 1
+    ? winnerGroup.map(p => p.name).join('、') + ' 并列冠军'
+    : winnerGroup[0].name + ' 获得冠军';
+
+  let html = `<div style='padding:12px;font-size:16px;'>`;
+  html += `<h2 style='color:red;text-align:center;'>🏆 对局结束！冲线成功</h2>`;
+  html += `<h3 style='text-align:center;color:#FFD700;'>${winnerText}！</h3>`;
+  ranked.forEach(item => {
+    const sym = utils.toSymbol(item.score);
+    const isWin = item.rank === 1;
+    html += `<div style='padding:8px 0;border-bottom:1px solid #eee;${isWin ? "background:#fff3cd;font-weight:bold;" : ""}'>
+              ${item.rankText}：${item.name} &nbsp; 最终：<span style='color:red;font-size:18px;'>${sym}</span>
+            </div>`;
+  });
+  html += `</div>`;
+  sendPush(`🏆 对局结束：${winnerText}`, html);
+}
+
+function bindEvents() {
+  document.getElementById('add-location').onclick = () => {
+    const val = document.getElementById('new-location').value.trim();
+    if (!val) return;
+    const base = storage.loadBase();
+    if (!base.locations.includes(val)) {
+      base.locations.push(val);
+      storage.saveBase(base);
+      document.getElementById('new-location').value = '';
+      initSettingPage();
+    }
+  };
+
+  document.getElementById('add-player').onclick = () => {
+    const name = document.getElementById('new-player').value.trim();
+    const token = dom.newPlayerToken.value.trim();
+    if (!name) return;
+    const base = storage.loadBase();
+    if (!base.players.some(p => p.name === name)) {
+      base.players.push({ name, token });
+      storage.saveBase(base);
+      document.getElementById('new-player').value = '';
+      dom.newPlayerToken.value = '';
+      initSettingPage();
+    }
+  };
+
+  dom.playerCountInput.onchange = () => {
+    const base = storage.loadBase();
+    const val = Number(dom.playerCountInput.value);
+    if (val >= 2 && val <= 10) {
+      base.playerCount = val;
+      storage.saveBase(base);
+    } else {
+      dom.playerCountInput.value = base.playerCount || 5;
+    }
+  };
+
+  document.getElementById('btn-start').onclick = () => {
+    const base = storage.loadBase();
+    const count = base.playerCount || 5;
+    const loc = dom.locationSelect.value.trim();
+    const levelSym = dom.startLevelSelect.value;
+    const players = Array.from(document.querySelectorAll('.create-player')).map(s => s.value.trim());
+    if (!loc || !levelSym) { modal.tip('请选地点和等级'); return; }
+    if (new Set(players).size !== count || players.some(x => !x)) { modal.tip(`请选择${count}名不重复的玩家`); return; }
+
+    storage.saveLastGame(loc, players);
+    const id = utils.gameId(loc);
+    const startNum = utils.toNumber(levelSym);
+    const game = {
+      id, name: id, location: loc, startLevel: startNum,
+      players, levelGrid: [[...players.map(() => startNum)]],
+      meta: { createdAt: utils.nowStr(), endedAt: null, status: 'in_progress' }
+    };
+    const games = storage.loadGames();
+    games.unshift(game);
+    storage.saveGames(games);
+    currentGame = game;
+    renderGamePage();
+    showPage('page-game');
+  };
+
+  document.getElementById('btn-add-round').onclick = () => {
+    if (currentGame.meta.status !== 'in_progress') return;
+    const round = currentGame.levelGrid.length;
+    document.getElementById('round-title').textContent = `记录第 ${round} 盘得分`;
+    const box = document.getElementById('round-players');
+    box.innerHTML = currentGame.players.map((p, i) =>
+      `<label class="player-item"><input type="checkbox" class="winner-check" data-i="${i}" id="winner-${round}-${i}" autocomplete="off"> ${p}</label>`
+    ).join('');
+    document.getElementById('add-level').value = '';
+    document.getElementById('modal-round').classList.add('show');
+  };
+
+  document.getElementById('btn-cancel-round').onclick = () => {
+    document.getElementById('modal-round').classList.remove('show');
+  };
+
+  document.getElementById('btn-confirm-round').onclick = () => {
+    const checks = document.querySelectorAll('.winner-check:checked');
+    if (checks.length === 0) { modal.tip('至少选一位胜者'); return; }
+    const add = Number(document.getElementById('add-level').value) || 0;
+    if (add === 0) { modal.tip('请输入有效的升级数（不为0）'); return; }
+
+    const last = [...currentGame.levelGrid.at(-1)];
+    checks.forEach(c => { const i = Number(c.dataset.i); last[i] += add; });
+    currentGame.levelGrid.push(last);
+    storage.updateCurrentGame(currentGame);
+    document.getElementById('modal-round').classList.remove('show');
+    renderGamePage();
+    pushGameResultToPlayer();
+
+    if (gameRules.checkAutoWin(currentGame)) {
+      const { name } = gameRules.getWinnerInfo(currentGame);
+      modal.confirm(`<span class="flash-text">${name} 冲线!</span>`, ok => {
+        if (ok) endGame();
+      });
+    }
+  };
+
+  document.getElementById('btn-manage').onclick = () => {
+    const container = document.getElementById('manage-players-container');
+    container.innerHTML = '';
+    const count = currentGame.players.length;
+    for (let i = 0; i < count; i++) {
+      const item = document.createElement('div');
+      item.className = 'form-item';
+      item.innerHTML = `<label>玩家${i+1}</label><select class="manage-player" data-i="${i}"></select>`;
+      container.appendChild(item);
+    }
+    refreshPlayerSelects('.manage-player', currentGame.players);
+    document.getElementById('modal-manage').classList.add('show');
+  };
+
+  document.getElementById('btn-cancel-manage').onclick = () => {
+    document.getElementById('modal-manage').classList.remove('show');
+  };
+
+  document.getElementById('btn-save-manage').onclick = () => {
+    const players = Array.from(document.querySelectorAll('.manage-player')).map(s => s.value.trim());
+    const count = players.length;
+    if (new Set(players).size !== count || players.some(x => !x)) {
+      modal.tip(`请选择${count}名不重复的玩家`); return; }
+    currentGame.players = players;
+    storage.updateCurrentGame(currentGame);
+    storage.saveLastGame(currentGame.location, players);
+    document.getElementById('modal-manage').classList.remove('show');
+    renderGamePage();
+  };
+
+  document.getElementById('btn-end').onclick = () => {
+    modal.confirm("确定冲线？结束不可修改", ok => {
+      if (ok) endGame();
+    });
+  };
+
+  document.getElementById('btn-edit-last').onclick = () => {
+    openEditLastModal();
+  };
+
+  document.getElementById('btn-cancel-edit-last').onclick = () => {
+    document.getElementById('modal-edit-last').classList.remove('show');
+  };
+
+  document.getElementById('btn-confirm-edit-last').onclick = () => {
+    confirmEditLast();
+  };
+
+  document.getElementById('go-setting').onclick = () => { initSettingPage(); showPage('page-setting'); };
+  document.getElementById('go-back').onclick = () => { initCreatePage(); showPage('page-create'); };
+  document.getElementById('go-history').onclick = () => { renderHistory(); showPage('page-history'); };
+  document.getElementById('go-new').onclick = () => { initCreatePage(); showPage('page-create'); };
+  dom.searchInput.oninput = renderHistory;
+  document.getElementById('btn-close-history').onclick = () => {
+    document.getElementById('modal-history-detail').classList.remove('show');
+  };
+
+  document.getElementById('btn-save-edit-token').onclick = () => {
+    const newToken = dom.editPlayerToken.value.trim();
+    storage.updatePlayerToken(editingPlayerName, newToken);
+    document.getElementById('modal-edit-player').classList.remove('show');
+    initSettingPage();
+  };
+  document.getElementById('btn-cancel-edit').onclick = () => {
+    document.getElementById('modal-edit-player').classList.remove('show');
+  };
+
+  document.getElementById('btn-backup').onclick = () => {
+    modal.confirm("确认备份所有数据？（玩家、地点、历史记录）", ok => {
+      if (ok) {
+        storage.backupAll();
+        modal.tip("备份成功！文件已下载");
+      }
+    });
+  };
+
+  document.getElementById('btn-restore').onclick = () => {
+    modal.confirm("恢复会覆盖现有数据，确认继续？", ok => {
+      if (ok) {
+        document.getElementById('restore-file').click();
+      }
+    });
+  };
+
+  document.getElementById('restore-file').onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const data = JSON.parse(evt.target.result);
+        storage.restoreAll(data);
+        modal.tip("恢复成功！页面已刷新");
+        initCreatePage();
+        initSettingPage();
+        showPage('page-setting');
+      } catch (err) {
+        modal.tip("恢复失败：文件格式错误");
+      }
+    };
+    reader.readAsText(file);
+  };
+}
+
+function renderHistory() {
+  const games = storage.loadGames();
+  const keyword = dom.searchInput.value.toLowerCase();
+  dom.historyList.innerHTML = '';
+  games.forEach((game, index) => {
+    const match = game.location.toLowerCase().includes(keyword)
+      || game.players.some(p => p.toLowerCase().includes(keyword));
+    if (!match) return;
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    item.innerHTML = `
+      <div class="left"><div>${game.name}</div></div>
+      <button class="danger delete-history" data-index="${index}">删除</button>`;
+    item.querySelector('.left').onclick = () => showHistoryDetail(game);
+    item.querySelector('.delete-history').onclick = (e) => {
+      modal.confirm("删除这条记录？", ok => {
+        if (!ok) return;
+        const all = storage.loadGames();
+        all.splice(Number(e.target.dataset.index), 1);
+        storage.saveGames(all);
+        renderHistory();
+      });
+    };
+    dom.historyList.appendChild(item);
+  });
+}
+
+function showHistoryDetail(game) {
+  const box = document.getElementById('history-detail-content');
+  let html = `<div class="title">${game.name}</div>`;
+  if (game.meta.endedAt) html += `<div class="end-time">结束：${utils.formatTime(game.meta.endedAt)}</div>`;
+  const lastRow = game.levelGrid.at(-1);
+  const prevRow = game.levelGrid.length > 1 ? game.levelGrid.at(-2) : null;
+  let playerHeaders = '';
+  game.players.forEach((p, i) => {
+    const isScored = game.levelGrid.length > 1 && lastRow[i] > prevRow[i];
+    playerHeaders += `<th class="${isScored ? 'winner-name' : ''}">${p}</th>`;
+  });
+  html += `<table><thead><tr><th>第N盘</th>${playerHeaders}</tr></thead><tbody>`;
+  const reversed = [...game.levelGrid].reverse();
+  reversed.forEach((row, idx) => {
+    const originalIndex = game.levelGrid.length - 1 - idx;
+    const max = Math.max(...row);
+    html += `<tr><td>第${originalIndex}盘</td>`;
+    row.forEach(n => { html += `<td class="${n === max ? 'max-score' : ''}">${utils.toSymbol(n)}</td>`; });
+    html += `</tr>`;
+  });
+  html += `</tbody></table>`;
+  box.innerHTML = html;
+  document.getElementById('modal-history-detail').classList.add('show');
+}
+
+initCreatePage();
+bindEvents();
+</script>
+</body>
+</html>
